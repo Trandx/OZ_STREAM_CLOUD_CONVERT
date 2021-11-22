@@ -20,6 +20,7 @@ class ValidMedia extends ResponseController
      */
     public function handle(Request $request, Closure $next)
     {
+    
         $bearerToken = $request->bearerToken();
 
         $datas = $request->only('media_id', 'saison_id');
@@ -45,7 +46,7 @@ class ValidMedia extends ResponseController
                         'Authorization' => 'Bearer '.$bearerToken,
                         'Accept' => 'application/json',
                     ])->post(env('OZ_STREAM_SERVER').'/api/server/is/media/diffuser', $params);
-
+            
         if( $response->successful() ){
 
             // if(User::where('accessToken',$datas['accessToken'])->first()){

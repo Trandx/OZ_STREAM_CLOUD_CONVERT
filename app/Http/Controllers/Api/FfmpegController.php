@@ -52,14 +52,6 @@ class FfmpegController extends ResponseController
 
              $column = 'pseudoLink';
 
-             if(isset($medias[$column]) and !is_null($medias[$column])){
-
-                 $file_path = app_path($medias[$column]); // app_path("public/test.txt");
-                if(File::exists($file_path)) File::delete($file_path);
-
-                 //unlink($user[$column]);
-
-             }
              $path = "users/".$path;
 
              $medias[$column] = env("PUBLIC_APP_URL")."/".$path;
@@ -80,6 +72,19 @@ class FfmpegController extends ResponseController
                         'table' =>'medias',
                     ]);
 
+                    $data = Media::where('merdia_id',$medias['media_id'])->first();
+
+                    if($data and !is_null($data->pseudoLink)){
+
+                        $path = explode('users/',$data->pseudoLink)[1];
+
+                        $file_path = public_path('users/'.$path); // app_path("public/test.txt");
+                       if(File::exists($file_path)) File::delete($file_path);
+       
+                        //unlink($user[$column]);
+       
+                    }
+
                 }
 
                 if (isset($datas['saison_id'])) {
@@ -96,6 +101,19 @@ class FfmpegController extends ResponseController
                         'user_id' => $medias['user_id'],
                         'table' =>'saisons',
                     ]);
+
+                    $data = Media::where('saison_id',$medias['saison_id'])->first();
+
+                    if($data and !is_null($data->pseudoLink)){
+
+                        $path = explode('users/',$data->pseudoLink)[1];
+
+                        $file_path = public_path('users/'.$path); // app_path("public/test.txt");
+                       if(File::exists($file_path)) File::delete($file_path);
+       
+                        //unlink($user[$column]);
+       
+                    }
 
                 }
 
