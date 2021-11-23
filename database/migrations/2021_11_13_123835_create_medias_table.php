@@ -16,7 +16,7 @@ class CreateMediasTable extends Migration
         Schema::create('medias', function (Blueprint $table) {
             $table->id();
             $table->string('media_id');
-            $table->string('serie_id');
+            $table->string('serie_id')->nullable();
             $table->string('pseudoLink');
             $table->string('finalLink')->nullable();
             $table->timestamps();

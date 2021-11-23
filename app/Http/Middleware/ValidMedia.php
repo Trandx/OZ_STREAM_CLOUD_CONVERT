@@ -23,11 +23,12 @@ class ValidMedia extends ResponseController
     
         $bearerToken = $request->bearerToken();
 
-        $datas = $request->only('media_id', 'saison_id');
+        $datas = $request->only('media_id', 'saison_id', 'isFilmBande');
 
         $field = [
             'media_id' => 'required_without:saison_id',
             'saison_id' => 'required_without:media_id',
+            'isFilmBande' => 'required_without:saison_id|boolean',
         ];
 
         $validator = Validator::make($datas,$field);

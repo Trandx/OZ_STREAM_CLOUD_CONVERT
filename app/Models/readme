@@ -1,0 +1,28 @@
+----VPS command ---------
+
+ *** unzip *****
+
+ unzip file.zip -d destination_folder
+
+ **** unzip tar ****
+ tar -xf folder.tar destination_folder
+
+ **** unzip 7zip *****
+    **This command installs 7z:
+
+    sudo apt-get install p7zip-full
+
+    **This command lists the contents of the zip:
+
+    7z l zipfile.zip
+
+    **This command extracts the contents of the zip:
+
+    7z x zipfile.zip
+
+
+ **** permission *****
+ chmod -R 777 destination_folder
+
+ *** copy with permission ****
+ rsync -aux /home/my_home /media/backup/my_home
