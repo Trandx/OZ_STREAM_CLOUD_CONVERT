@@ -26,3 +26,6 @@
 
  *** copy with permission ****
  rsync -aux /home/my_home /media/backup/my_home
+
+ *** delete file and folder ****
+ rm -R ./*

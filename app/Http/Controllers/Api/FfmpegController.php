@@ -11,6 +11,9 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
 
 
@@ -212,9 +215,14 @@ class FfmpegController extends ResponseController
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function generateExpiredLink()
     {
-        //
+       
+       
+          $url = URL::temporarySignedRoute('getLink', now()->addSeconds(30), ['media_id' => 1]);
+            
+          return $this->successResponse('success', $url, 200);
+        
     }
 
     /**
@@ -223,9 +231,66 @@ class FfmpegController extends ResponseController
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function getLink(Request $request)
     {
-        //
+        if (! $request->hasValidSignature()) {
+            return $this->errorResponse("invalid", ['error' => 'INVALID URL'], Response::HTTP_NOT_FOUND);
+        }
+        $media_id = $request->media_id;
+        $media = Media::find($media_id);
+        $to = 'user/'. explode('users/',$media->pseudoLink)[1];
+        //echo $to;
+
+        //return Redirect::to($media->pseudoLink)->withInput(['id'=>1]);
+
+        //return $this->successResponse('success', ['url' =>$media->pseudoLink], 200);
+        return static::inline($to);
+
+        
+    }
+
+    public static function inline($path, $name = null, $lifetime = 0)
+    {
+        $mineType = Storage::mimeType($path);
+        $path = Storage::path($path);
+        
+       
+        if (is_null($name)) {
+            $name = basename($path);
+        }
+
+        $filetime = filemtime($path);
+        $etag = md5($filetime . $path);
+        $time = gmdate('r', $filetime);
+        $expires = gmdate('r', $filetime + $lifetime);
+        $length = filesize($path);
+
+        $headers = array(
+            'Content-Disposition' => 'inline; filename="' . $name . '"',
+            'Last-Modified' => $time,
+            'Cache-Control' => 'must-revalidate',
+            'Expires' => $expires,
+            'Pragma' => 'public',
+            'Etag' => $etag,
+        );
+
+        $headerTest1 = isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) && $_SERVER['HTTP_IF_MODIFIED_SINCE'] == $time;
+        $headerTest2 = isset($_SERVER['HTTP_IF_NONE_MATCH']) && str_replace('"', '', stripslashes($_SERVER['HTTP_IF_NONE_MATCH'])) == $etag;
+        
+        if ($headerTest1 || $headerTest2) { //image is cached by the browser, we dont need to send it again
+            return response('', 304, $headers);
+        }
+
+        
+
+        $headers = array_merge($headers, array(
+            'Content-Type' => $mineType,
+            'Content-Length' => $length,
+                ));
+
+        return response(Storage::get($path), 200, $headers);
+
+
     }
 
     /**
