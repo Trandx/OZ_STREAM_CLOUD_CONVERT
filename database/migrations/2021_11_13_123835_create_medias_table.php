@@ -15,10 +15,18 @@ class CreateMediasTable extends Migration
     {
         Schema::create('medias', function (Blueprint $table) {
             $table->id();
-            $table->string('media_id');
-            $table->string('serie_id')->nullable();
-            $table->string('pseudoLink');
-            $table->string('finalLink')->nullable();
+            $table->string('media_id')->nullable();
+            $table->string('saison_id')->nullable();
+
+            $table->string('bandePath')->nullable();
+            $table->string('finalBandeLink')->nullable();
+
+            $table->string('mediaPath')->nullable();
+            $table->string('finalMediaLink')->nullable();
+
+            $table->string('coverLink')->nullable();
+            $table->string('gifLink')->nullable();
+            
             $table->timestamps();
         });
     }

@@ -13,6 +13,13 @@ Route::middleware(['validMedia'])->group(function () {
 
 Route::get('/getLink',[Api\FfmpegController::class, 'generateExpiredLink'])->name('getExpiredLink');
 
+Route::get('getMediaBandeData/{media_id}',[Api\FfmpegController::class, 'getMediaBandeData'])->name('getMediaBandeData');
+
+Route::get('getSaisonBandeData/{media_id}',[Api\FfmpegController::class, 'getSaisonBandeData'])->name('getSaisonBandeData');
+
+Route::get('getMediaData/{media_id}',[Api\FfmpegController::class, 'getMediaData'])->name('getMediaData');
+
+
 Route::get('/link',[Api\FfmpegController::class, 'getLink'])->name('getLink');
 
 Route::get('medias/{file}', function($file)
@@ -21,7 +28,7 @@ Route::get('medias/{file}', function($file)
     $path =  public_path('users').'/1/medias/' . $file; 
     
     if (File::exists($path)) {
-        return Api\FfmpegController::inline($path);
+        return (new Api\FfmpegController())->inline($path);
     }
     return response(null, 404);
 });

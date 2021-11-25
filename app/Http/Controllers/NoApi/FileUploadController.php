@@ -95,6 +95,48 @@ class FileUploadController extends ResponseController
 
     }
 
+        /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function mediaStore($request,  $path)
+    {
+
+        $file = $request->file();
+        $fileInfo = null;
+
+
+            foreach ($file as $value) {
+
+                    //$type = explode("/",$value->getMimeType()); //video/mp4
+
+                  $fileName = $request->id.time().'.'.$value->getClientOriginalExtension();
+                  $content = $value->getContent();
+                  $path = $path.'/'.$fileName;
+                    //verification de extensions
+                   // $verifData = $this->fileVerif($request,$type, $value);
+
+
+                        // $filePath = $file->store($link)
+
+                        // store file
+                        Storage::disk('local_user')->put($path, $content);
+                        //$filePath = $request->file($key)->storeAs("$path", $fileName, 'public');
+
+                    /* $fileModel->name = $fileName;
+                        $fileModel->file_path = '/storage/' . $filePath;
+                        $fileModel->save();*/
+
+                $fileInfo[] = ["name" => $fileName, "file_path" => $path];
+
+            }
+
+            return $fileInfo;
+
+    }
+
 
     /**
      * Display the specified resource.
@@ -122,26 +164,5 @@ class FileUploadController extends ResponseController
             return $fileInfo;
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
-    }
 }

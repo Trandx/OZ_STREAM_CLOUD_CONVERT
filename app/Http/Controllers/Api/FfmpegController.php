@@ -2,16 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Api\Auth\SessionTrait;
-use App\Http\Controllers\FfmpegController as Ffmpeg;
 use App\Http\Controllers\NoApi\FileUploadController;
+use App\Http\Controllers\NoApi\ServerTrait;
 use App\Jobs\ConverMediasJob;
 use App\Models\Media;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
@@ -19,6 +17,7 @@ use Illuminate\Support\Facades\Validator;
 
 class FfmpegController extends ResponseController
 {
+   use ServerTrait;
 
      /**
      * @OA\Post(
@@ -34,7 +33,7 @@ class FfmpegController extends ResponseController
      *                  type="object",
      *                  required={"media"},
      *                  @OA\Property(property="media_id", type="string"),
-     *                  @OA\Property(property="serie_id", type="string"),
+     *                  @OA\Property(property="saison_id", type="string"),
      *                  @OA\Property(property="isFilmBande", type="string"),
      *                  @OA\Property(property="media", type="file"),
      *               ),
@@ -74,7 +73,7 @@ class FfmpegController extends ResponseController
         $datas = $request->only( 'media','media_id','saison_id', 'isFilmBande');
 
        $field = [
-            'media' => 'required|file|max:1024000' /*|mimes:mp4,mkv,ts|dimensions:width=500,height=500',*/,
+            'media' => 'required|file|mimes:mp4,flv,3gp,mov,avi,webm,wmv|max:1024000' /*|mimes:mp4,mkv,ts|dimensions:width=500,height=500',*/,
         ];
 
         $validator = Validator::make($datas,$field);
@@ -86,19 +85,14 @@ class FfmpegController extends ResponseController
         $id = $request->id;
 
 
-        $data =  (new FileUploadController())->store($request,  $id."/medias");
+        $data =  (new FileUploadController())->mediaStore($request,  $id."/medias");
        // var_dump($datas);
 
             $path = $data[0]['file_path'];
             //var_dump($path);
             //$data = array_merge([$type.'Link'=> "users/".$path], self::updated_at(), self::updated_by());
 
-
-             $column = 'pseudoLink';
-
              $path = "users/".$path;
-
-             $medias[$column] = env("PUBLIC_APP_URL")."/".$path;
 
               // contacter le server distant
 
@@ -111,89 +105,129 @@ class FfmpegController extends ResponseController
                         'id' => $medias['media_id'],
                         'table' =>'medias',
                     ];
+                    
+                    $mediaInfo = Media::where('media_id', $medias['media_id'])->first();
 
-                    if($datas['isFilmBande']){
+                    if(!$datas['isFilmBande']){
 
-                        $serverDatas['link'] = $medias[$column];
+                        $column = 'mediaPath';
 
-                    }else{
+                        $medias[$column] = $path; //env("PUBLIC_APP_URL")."/".$path;
 
-                        $serverDatas['bandeLink'] = $medias[$column];
+                        $link = 'api/getMediaData/'.$medias["media_id"];
+
+                        $serverDatas['link'] =  $link; // $medias[$column]
+
+                        /// info sur la video
+                        $mediaData =  (new ConvertController())->analyse($path);
+
+                        $serverDatas['duration'] =  $mediaData->duration; // $medias[$column]
+
+                        $oldPath = $mediaInfo->mediaPath??null;
+
+                         //lance le generateur de pseudolien
+
+                    //$expiredLink = $this->generateExpiredLink('getMediaData',now()->addHours(5), ['media_id' => $medias['media_id'], 'token' => $bearerToken]);
+                    
+                    
+                }else{
+                        ///il faut fourmir le lien final.
+                        $column = 'bandePath';
+
+                        $medias[$column] = $path; //env("PUBLIC_APP_URL")."/".$path;
+
+                        //penser à mettre à jour la durée de la vidéo
+
+                        $link = 'api/getMediaBandeData/'.$medias["media_id"];
+
+                        $serverDatas['bandeLink'] =  $link; // $medias[$column]
+
+                        $oldPath = $mediaInfo->bandePath??null;
+
                     }
 
-                    $response = Http::withHeaders([
+                    $response = static::postServer('/api/sever/add/media/link', $bearerToken, $serverDatas);
+                   
+                  /*  $response = Http::withHeaders([
                         'Authorization' => 'Bearer '.$bearerToken,
                         'Accept' => 'application/json',
                     ])->post(env('OZ_STREAM_SERVER').'/api/sever/add/media/link', $serverDatas);
-
-                    $data = Media::where('media_id', $medias['media_id'])->first();
-
-                    if($data and !is_null($data->pseudoLink)){
-
-                        $path = explode('users/',$data->pseudoLink)[1];
-
-                        $file_path = public_path('users/'.$path); // app_path("public/test.txt");
-
-                       if(File::exists($file_path)) File::delete($file_path);
-       
-                        //unlink($user[$column]);
-                        
-                    }
+                    */
 
                 }
 
                 if (isset($datas['saison_id'])) {
 
+                    $link = 'api/getSaisonBandeData/'.$datas["saison_id"];
+
+                    $serverDatas = [
+                        'clientServerToken' => env('CLIENT_SERVER_TOKEN'),
+                        'id' => $datas['saison_id'],
+                        'table' =>'saisons',
+                        'bandeLink' =>  $link,
+                    ];
+
                     $medias['saison_id'] = $datas['saison_id'];
 
-                    $response = Http::withHeaders([
+                    $column = 'bandePath';
+
+                    $medias[$column] = $path; //env("PUBLIC_APP_URL")."/".$path;
+
+                    $response = static::postServer('/api/sever/add/media/link', $bearerToken, $serverDatas);
+
+                   /* $response = Http::withHeaders([
                         'Authorization' => 'Bearer '.$bearerToken,
                         'Accept' => 'application/json',
-                    ])->post(env('OZ_STREAM_SERVER').'/api/sever/add/media/link', [
-                        'clientServerToken' => env('CLIENT_SERVER_TOKEN'),
-                        'bandeLink' => $medias[$column],
-                        'id' => $medias['saison_id'],
-                        'user_id' => $medias['user_id'],
-                        'table' =>'saisons',
-                    ]);
+                    ])->post(env('OZ_STREAM_SERVER').'/api/sever/add/media/link',  $serverDatas );*/
+                    $mediaInfo = Media::where('saison_id', $datas['saison_id'])->first();
 
-                    $data = Media::where('saison_id',$medias['saison_id'])->first();
-
-                    if($data and !is_null($data->pseudoLink)){
-
-                        $path = explode('users/',$data->pseudoLink)[1];
-
-                        $file_path = public_path('users/'.$path); // app_path("public/test.txt");
-                       if(File::exists($file_path)) File::delete($file_path);
-       
-                        //unlink($user[$column]);
-       
-                    }
-
+                    $oldPath = $mediaInfo->bandePath??null;
+                   
                 }
+
 
 
             if( $response->successful() ){
 
-                if($data){
+                if(File::exists($oldPath)){
 
-                    $data->update($medias);
+                   // $oldPath = public_path($oldPath);
+                    File::delete($oldPath);
 
-                   // $data = (object) array_merge((array) $data, (array)$medias);
+                }elseif(Storage::exists($oldPath)){
 
-                    $data->save();
+                   // $oldPath = storage_path($oldPath);
+                    Storage::delete($oldPath);
 
-                }else{
-                    $data = Media::create($medias);
+                }elseif(!is_null($oldPath) ){
+                    return $this->errorResponse("error path", ['error' => 'invalid video path'], Response::HTTP_NOT_FOUND);
                 }
 
+               
+               
+                if($mediaInfo){
+
+                    $mediaInfo->update($medias);
+
+                   // $mediaInfo = (object) array_merge((array) $mediaInfo, (array)$medias);
+
+                    $mediaInfo->save();
+
+                }else{
+                    $mediaInfo = Media::create($medias);
+                }
+
+                //$mediaInfo->temporalyLink = $expiredLink;
+                    $data = (object)[];
                 
+                    $data->link = env('PUBLIC_APP_URL').'/'.$link;
+              
 
                    /// lancer la job de covertion
 
                   /// ConverMediasJob::dispatch(public_path($path), )->delay(now()->addSeconds(60));
 
-                return  $this->successResponse($data, ['success' => 'account ' . $id. ' is a diffuser'], Response::HTTP_CREATED);
+                return  $this->successResponse($data, ['success' => 'this user can read'], Response::HTTP_CREATED);
 
             }elseif( $response->failed() ){
 
@@ -215,13 +249,12 @@ class FfmpegController extends ResponseController
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function generateExpiredLink()
+    public function generateExpiredLink($route, $expiredTime, $datas)
     {
        
-       
-          $url = URL::temporarySignedRoute('getLink', now()->addSeconds(30), ['media_id' => 1]);
+          return URL::temporarySignedRoute($route, $expiredTime, $datas);
             
-          return $this->successResponse('success', $url, 200);
+          //return $this->successResponse('success', $url, 200);
         
     }
 
@@ -244,26 +277,196 @@ class FfmpegController extends ResponseController
         //return Redirect::to($media->pseudoLink)->withInput(['id'=>1]);
 
         //return $this->successResponse('success', ['url' =>$media->pseudoLink], 200);
-        return static::inline($to);
+        return $this->inline($to);
 
-        
     }
 
-    public static function inline($path, $name = null, $lifetime = 0)
-    {
-        $mineType = Storage::mimeType($path);
-        $path = Storage::path($path);
+      /**
+     * @OA\Post(
+     *      path="/api/getMediaBandeData/{media_id}",
+     *      operationId="streamming",
+     *      tags={"media streamming"},
+     *      summary="Uget datas streams",
+     *      description="return the content",
+     * @OA\Parameter(name="media_id",description="id of media",in="path", @OA\Schema(type="string" )),
+     *     
+     *      @OA\Response(
+     *          response=20110,
+     *          description="Successful operation",
+     *       ),
+     *      @OA\Response(
+     *          response=400,
+     *          description="Bad Request"
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Unauthenticated",
+     *      ),
+     *      @OA\Response(
+     *          response=403,
+     *          description="Forbidden"
+     *      )
+     * )
+     */
+
+    public function getMediaBandeData($media_id){
+
+        $media = Media::where('media_id',$media_id)->first();
+
+        $path = $media->bandePath;
+
+        return $this->inline($path);
+
+    }
+
+          /**
+     * @OA\Post(
+     *      path="/api/getMediaData/{media_id}",
+     *      operationId="streamming",
+     *      tags={"media streamming"},
+     *      summary="Uget datas streams",
+     *      description="return the content",
+     * @OA\Parameter(name="media_id",description="id of media",in="path", @OA\Schema(type="string" )),
+     *     
+     *      @OA\Response(
+     *          response=20110,
+     *          description="Successful operation",
+     *       ),
+     *      @OA\Response(
+     *          response=400,
+     *          description="Bad Request"
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Unauthenticated",
+     *      ),
+     *      @OA\Response(
+     *          response=403,
+     *          description="Forbidden"
+     *      )
+     * )
+     */
+
+    public function getMediaData(Request $request, $media_id=null){
+
+        $bearerToken = $request->bearerToken();
+
+        $media_id = $media_id??$request->media_id;
+
+       // $media_id = $request->media_id;
+
+        $serverDatas = [
+            'clientServerToken' => env('CLIENT_SERVER_TOKEN'),
+            'media_id' => $media_id,
+        ];
+
+      /*  if (! $request->hasValidSignature()) {
+
+            return $this->errorResponse("invalid", ['error' => 'INVALID URL'], Response::HTTP_NOT_FOUND);
+        }
+        */
+
+        //appel de la function qui verifie si un user à payé
+        $response = static::postServer('/api/sever/user/bought', $bearerToken, $serverDatas );
+
+        if( $response->successful() ){
+
+             // verifie si le finaLink n'est pas null
         
+        $media = Media::where('media_id',$media_id)->first();
+
+        if(is_null($media->finalMediaLink)){
+
+             $path = $media->mediaPath;
+
+            return $this->inline($path);
+
+        }else{
+            // appel de la function  de génération du m3u8
+
+        }
+
+
+        }elseif( $response->failed() ){
+
+            return  $this->errorResponse($response->json(), ['error' => 'request error'], $response->status());
+
+        }
+
+       
+
+    }
+
+              /**
+     * @OA\Post(
+     *      path="/api/getSaisonBandeData/{saison_id}",
+     *      operationId="streamming",
+     *      tags={"media streamming"},
+     *      summary="Uget datas streams",
+     *      description="return the content",
+     * @OA\Parameter(name="saison_id",description="id of saison",in="path", @OA\Schema(type="string" )),
+     *     
+     *      @OA\Response(
+     *          response=20110,
+     *          description="Successful operation",
+     *       ),
+     *      @OA\Response(
+     *          response=400,
+     *          description="Bad Request"
+     *      ),
+     *      @OA\Response(
+     *          response=401,
+     *          description="Unauthenticated",
+     *      ),
+     *      @OA\Response(
+     *          response=403,
+     *          description="Forbidden"
+     *      )
+     * )
+     */
+
+    public function getSaisonBandeData($saison_id){
+        
+        $media = Media::where('saison_id',$saison_id)->first();
+
+        $path = $media->bandePath;
+
+        return $this->inline($path);
+
+    }
+
+    public function inline($path, $name = null, $lifetime = 0)
+    {
+
+        if(File::exists($path)){
+
+            $mineType = File::mimeType($path);
+
+            $basPath = public_path($path);
+
+            $isFile = true;
+
+        }elseif(Storage::exists($path)){
+
+            $mineType = Storage::mimeType($path);
+            $basPath = Storage::path($path);
+
+        }else{
+            return $this->errorResponse("error path", ['error' => 'invalid video path'], Response::HTTP_NOT_FOUND);
+        }
+
+        
+       
        
         if (is_null($name)) {
             $name = basename($path);
         }
 
-        $filetime = filemtime($path);
-        $etag = md5($filetime . $path);
+        $filetime = filemtime($basPath);
+        $etag = md5($filetime . $basPath);
         $time = gmdate('r', $filetime);
         $expires = gmdate('r', $filetime + $lifetime);
-        $length = filesize($path);
+        $length = filesize($basPath);
 
         $headers = array(
             'Content-Disposition' => 'inline; filename="' . $name . '"',
@@ -281,14 +484,12 @@ class FfmpegController extends ResponseController
             return response('', 304, $headers);
         }
 
-        
-
         $headers = array_merge($headers, array(
             'Content-Type' => $mineType,
             'Content-Length' => $length,
                 ));
 
-        return response(Storage::get($path), 200, $headers);
+        return response(isset($isFile)?File::get($path):Storage::get($path), 200, $headers);
 
 
     }
