@@ -19,6 +19,12 @@ Route::get('getSaisonBandeData/{media_id}',[Api\FfmpegController::class, 'getSai
 
 Route::get('getMediaData/{media_id}',[Api\FfmpegController::class, 'getMediaData'])->name('getMediaData');
 
+Route::get('getKey/{key}', [Api\FfmpegController::class, 'getKey'])->name('getKey');
+
+Route::get('playlist/{media_id}/{playlist}', [Api\FfmpegController::class, 'playlist'])->name('playlist');
+
+Route::get('convert',[Api\ConvertController::class, 'convert'])->name('convert');
+
 
 Route::get('/link',[Api\FfmpegController::class, 'getLink'])->name('getLink');
 

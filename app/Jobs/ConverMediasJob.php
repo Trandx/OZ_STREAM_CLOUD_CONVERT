@@ -2,12 +2,15 @@
 
 namespace App\Jobs;
 
+use App\Http\Controllers\Api\ConvertController;
+use App\Http\Controllers\Api\OpenDriver\OpenDriveController;
 use Illuminate\Bus\Queueable;
-use App\Http\Controllers\FfmpegController as Ffmpeg;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 
 class ConverMediasJob implements ShouldQueue
 {
@@ -18,33 +21,35 @@ class ConverMediasJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($path, array $format)
+    public function __construct($path, $media, $isFilmBande)
     {
         $this->path = $path;
-
-        $this->format = $format;
+        $this->media = $media;
+        $this->isFilmBande = $isFilmBande;
+        
     }
 
     private $path;
 
-    private $format;
+    private $media;
+
+    private $isFilmBande;
 
     /**
      * Execute the job.
      *
      * @return void
      */
-    public function handle(Ffmpeg $ffmpeg)
+    public function handle(ConvertController $convert)
     {
 
-        foreach ($this->format as $value) {
+        // appel de la function de convertion 
 
-            $ffmpeg->convertToM3u8($value, $this->path);
+          if($convert->convert($this->path /*'users/1/medias/video.mp4'*/, [], array_merge($this->media, ['isFilmBande' =>$this->isFilmBande]))){
 
-        }
+              echo "convertion Ok \n cloud link ok";
 
-        OpendDriveUploadJob::dispatch()->delay(now()->addSeconds(60));
-
+            }       
 
     }
 }

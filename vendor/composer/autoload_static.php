@@ -36,8 +36,8 @@ class ComposerStaticInitb4872d363a012ee370f63aec12b0da36
         '9cdd7b9056abc3081735233ba9dd9c7f' => __DIR__ . '/..' . '/facade/flare-client-php/src/helpers.php',
         '6124b4c8570aa390c21fafd04a26c69f' => __DIR__ . '/..' . '/myclabs/deep-copy/src/DeepCopy/deep_copy.php',
         '0ccdf99b8f62f02c52cba55802e0c2e7' => __DIR__ . '/..' . '/zircote/swagger-php/src/functions.php',
-        'ac0aa5b57142c92aeadc397fa46b9d39' => __DIR__ . '/..' . '/darkaonline/l5-swagger/src/helpers.php',
         'ee34f4637679ddf756bc03f18b83be2d' => __DIR__ . '/..' . '/aminyazdanpanah/php-ffmpeg-video-streaming/src/helpers.php',
+        'ac0aa5b57142c92aeadc397fa46b9d39' => __DIR__ . '/..' . '/darkaonline/l5-swagger/src/helpers.php',
         'ed962a97bd972bc82007176b647d4e36' => __DIR__ . '/..' . '/facade/ignition/src/helpers.php',
     );
 
@@ -663,6 +663,7 @@ class ComposerStaticInitb4872d363a012ee370f63aec12b0da36
         'App\\Http\\Controllers\\Api\\Auth\\SessionTrait' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/Auth/SessionTrait.php',
         'App\\Http\\Controllers\\Api\\Auth\\TokenTrait' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/Auth/TokenTrait.php',
         'App\\Http\\Controllers\\Api\\Auth\\UserController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/Auth/UserController.php',
+        'App\\Http\\Controllers\\Api\\ConvertController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/ConvertController.php',
         'App\\Http\\Controllers\\Api\\FfmpegController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/FfmpegController.php',
         'App\\Http\\Controllers\\Api\\OpenDriverController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/OpenDriverController.php',
         'App\\Http\\Controllers\\Api\\OpenDriver\\OpenDriveController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/OpenDriver/OpenDriveController.php',
@@ -670,7 +671,9 @@ class ComposerStaticInitb4872d363a012ee370f63aec12b0da36
         'App\\Http\\Controllers\\Api\\Uptobox\\UptoboxController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/Uptobox/UptoboxController.php',
         'App\\Http\\Controllers\\Controller' => __DIR__ . '/../..' . '/app/Http/Controllers/Controller.php',
         'App\\Http\\Controllers\\FfmpegController' => __DIR__ . '/../..' . '/app/Http/Controllers/FfmpegController.php',
+        'App\\Http\\Controllers\\NoApi\\FFMpegController' => __DIR__ . '/../..' . '/app/Http/Controllers/NoApi/FFMpegController.php',
         'App\\Http\\Controllers\\NoApi\\FileUploadController' => __DIR__ . '/../..' . '/app/Http/Controllers/NoApi/FileUploadController.php',
+        'App\\Http\\Controllers\\NoApi\\ServerTrait' => __DIR__ . '/../..' . '/app/Http/Controllers/NoApi/ServerTrait.php',
         'App\\Http\\Kernel' => __DIR__ . '/../..' . '/app/Http/Kernel.php',
         'App\\Http\\Middleware\\Authenticate' => __DIR__ . '/../..' . '/app/Http/Middleware/Authenticate.php',
         'App\\Http\\Middleware\\EncryptCookies' => __DIR__ . '/../..' . '/app/Http/Middleware/EncryptCookies.php',

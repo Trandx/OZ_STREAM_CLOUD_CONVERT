@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\NoApi;
 
+use App\Http\Controllers\Api\CustomCloudController;
 use App\Http\Controllers\Controller;
+use App\Jobs\ConverMediasJob;
+use App\Jobs\OpendDriveUploadJob;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -13,6 +16,7 @@ use Streaming\FFMpeg;
 use FFMpeg\Coordinate\TimeCode;
 use FFMpeg\Coordinate\Dimension;
 use getID3;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 
@@ -65,8 +69,32 @@ class FFMpegController extends Controller
     private $r_2k   ;
     private $r_4k   ;
 
-    public function hlsConvertion($path, array $formats = null){
+    public function hlsConvertion($path, array $formats = null, array $option = null){
 
+        $custom = new CustomCloudController();
+
+        if(File::exists($path)){
+
+            $path = public_path($path);
+            $filename = File::name($path);
+
+        }elseif(Storage::exists($path)){
+
+            $path = Storage::path($path);
+            $filename = File::name($path);
+
+        }else{
+
+            return $this->errorResponse("error path", ['error' => 'invalid video path'], Response::HTTP_NOT_FOUND);
+
+        }
+
+        $dir = dirname($path);
+
+
+       /* if(!is_dir($dir)){
+            mkdir($dir);
+        }*/
 
         if($formats){
 
@@ -82,15 +110,57 @@ class FFMpegController extends Controller
 
         }
 
+        //$fileDir = $dir.'/converted';
+
+        $fileDir = $dir;
+
+        /* $from_custom = [
+                'cloud' => $custom,
+                'options' =>  [$fileDir] //this array will be passed to the `download` method in the `CustomCloud` class.
+            ];
+            */
+    
+            $to_custom = [
+                'cloud' => $custom,
+                'options' => $option? array_merge($option, ["finalFolder" => $fileDir]):["finalFolder" => $fileDir]   //this array will be passed to the `upload` method in the `CustomCloud` class.
+            ];
+
         $this->ffmpeg = FFMpeg::create($this->config, $this->log)->open($path)->hls()
         ->x264()
         ->addRepresentations($convertTo)
-        ->save();
+        //->save($fileDir);
+        ->save(null /*$fileDir.'/'.$filename*/, $to_custom);
         /*->autoGenerateRepresentations([720, 360]) // You can limit the number of representatons
         ->save();*/
     }
 
-    public function hlsEncryptionAndConvertion($path, $keyPath = null, array $formats = null){
+    public function hlsEncryptionAndConvertion($path, $keyPath = null, array $formats = null, array $option = null){
+
+        $custom = new CustomCloudController();
+
+
+        if(File::exists($path)){
+
+            $path = public_path($path);
+            $filename = File::name($path);
+
+        }elseif(Storage::exists($path)){
+
+            $path = Storage::path($path);
+            $filename = File::name($path);
+
+        }else{
+
+            return $this->errorResponse("error path", ['error' => 'invalid video path'], Response::HTTP_NOT_FOUND);
+
+        }
+
+        $dir = dirname($path);
+
+
+       /* if(!is_dir($dir)){
+            mkdir($dir);
+        }*/
 
         if($formats){
 
@@ -109,37 +179,67 @@ class FFMpegController extends Controller
 
             //A path you want to save a random key to your local machine
 
-        $uriKey = 'keys/'.time();
-        $save_to = $keyPath?? public_path($uriKey);
+        $uriKey = time().'.key';
+        $save_to = $keyPath?? storage_path('keys/'.$uriKey);
 
             //An URL (or a path) to access the key on your website
 
             /// write one route that redirect on expired link
 
-        $url = env('PUBLIC_APP_URL').$uriKey;
+       // $url = env('PUBLIC_APP_URL').'/'.$uriKey;
+
+        $url = $uriKey;
 
             // or $url = '/"PATH TO THE KEY DIRECTORY"/key';
+             //$fileDir = $dir.'/converted';
+            $fileDir = $dir;
 
-       return  $this->ffmpeg = FFMpeg::create($this->config, $this->log)->open($path)->hls()
-        ->encryption($save_to, $url)
-        ->x264()
-        ->addRepresentations($convertTo)
-        ->save();
+            /* $from_custom = [
+                    'cloud' => $custom,
+                    'options' =>  [$fileDir] //this array will be passed to the `download` method in the `CustomCloud` class.
+                ];
+                */
+        
+                $to_custom = [
+                    'cloud' => $custom,
+                    'options' => $option? array_merge($option, ["finalFolder" => $fileDir]):["finalFolder" => $fileDir]   //this array will be passed to the `upload` method in the `CustomCloud` class.
+                ];
+
+            $this->ffmpeg = FFMpeg::create($this->config, $this->log)->open($path)->hls()
+            ->encryption($save_to, $url)
+            ->x264()
+            ->addRepresentations($convertTo)
+            ->save(null /*$fileDir.'/'.$filename*/, $to_custom);
+
+        // foreach ($formats as $key => $val) {
+        //    $this->ffmpeg = FFMpeg::create($this->config, $this->log)->open($path)->hls()
+        //     ->encryption($save_to, $url)
+        //     ->x264()
+        //     ->addRepresentations([$convertTo[$key]])
+        //     ->save($dir.'/converted/'.$val.'/'.$filename, );
+        // }
+        
+        
+        
 
         /*->autoGenerateRepresentations([720, 360]) // You can limit the number of representatons
         ->save();*/
+
+        //ConverMediasJob::dispatch($dir.'/converted')->delay(now()->addSeconds(5));
+
+        
     }
 
     public function extractingImage($path, $path_out){
 
-        return  $this->ffmpeg = FFMpeg::create($this->config, $this->log)->open($path)->frame(TimeCode::fromSeconds(10), new Dimension(854, 480))
+         $this->ffmpeg = FFMpeg::create($this->config, $this->log)->open($path)->frame(TimeCode::fromSeconds(10), new Dimension(854, 480))
                 ->save($path_out); //poster.jpg
 
     }
 
     public function extractingAnimated_image($path, $path_out){
 
-        return $this->ffmpeg = FFMpeg::create($this->config, $this->log)->open($path)->gif(TimeCode::fromSeconds(5), new Dimension(854, 480), 5)
+        $this->ffmpeg = FFMpeg::create($this->config, $this->log)->open($path)->gif(TimeCode::fromSeconds(5), new Dimension(854, 480), 5)
                 ->save($path_out); //'animated_image.gif'
 
     }
@@ -148,12 +248,18 @@ class FFMpegController extends Controller
 
         $getID3 = new getID3;
         $this->dataAnalyseVideo = $getID3->analyze($path);
+
+        if(isset($this->dataAnalyseVideo['playtime_string'])){
+
         $data['duration'] =  $this->dataAnalyseVideo['playtime_string'];
+
+        }
+
         $data['r_x'] =  $this->dataAnalyseVideo['video']['resolution_x'];
         $data['r_y'] =  $this->dataAnalyseVideo['video']['resolution_y'];
         $data['size'] =  $this->dataAnalyseVideo['filesize'];
 
-        return $data;
+       return  $data;
     }
 
 

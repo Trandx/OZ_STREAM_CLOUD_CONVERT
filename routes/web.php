@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\OpenDriver\OpenDriveController;
 use App\Http\Controllers\Api\Uptobox\UptoboxController;
 use Illuminate\Support\Facades\Route;
 
@@ -18,3 +19,5 @@ Route::get('/', function () {
     return view('welcome');
 });
 Route::get('uptobox', [UptoboxController::class, 'getUploadUrl']);
+
+Route::get('oplogin', [OpenDriveController::class, 'CreateFolder']);

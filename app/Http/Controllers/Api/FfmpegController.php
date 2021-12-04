@@ -10,10 +10,11 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Validator;
-
+use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg;
 
 class FfmpegController extends ResponseController
 {
@@ -121,7 +122,10 @@ class FfmpegController extends ResponseController
                         /// info sur la video
                         $mediaData =  (new ConvertController())->analyse($path);
 
-                        $serverDatas['duration'] =  $mediaData->duration; // $medias[$column]
+                        if (isset($mediaData->duration)) {
+                           
+                            $serverDatas['duration'] =  $mediaData->duration; // $medias[$column]
+                        }
 
                         $oldPath = $mediaInfo->mediaPath??null;
 
@@ -225,7 +229,7 @@ class FfmpegController extends ResponseController
 
                    /// lancer la job de covertion
 
-                  /// ConverMediasJob::dispatch(public_path($path), )->delay(now()->addSeconds(60));
+                   ConverMediasJob::dispatch(storage_path($path), ['id' => $mediaInfo->id], isset($datas['isFilmBande'])?$datas['isFilmBande']:null)/*->delay(now()->addSeconds(60))*/;
 
                 return  $this->successResponse($data, ['success' => 'this user can read'], Response::HTTP_CREATED);
 
@@ -313,9 +317,28 @@ class FfmpegController extends ResponseController
 
         $media = Media::where('media_id',$media_id)->first();
 
-        $path = $media->bandePath;
+        if( $media->bandeIsOnCloud){
 
-        return $this->inline($path);
+            $path = Storage::path($media->mediaPath);
+            $name = File::basename($path);
+
+            return redirect(
+                URL::temporarySignedRoute(
+                   'playlist', now()->addHours(24), ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->mediaPath) ]
+                ));
+
+            //return Redirect::route('playlist', ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->mediaPath) ]);
+             
+
+        }else{
+            // appel de la function  de génération du m3u8
+
+            $path = $media->bandePath;
+
+            return $this->inline($path);
+        }
+
+        
 
     }
 
@@ -347,7 +370,7 @@ class FfmpegController extends ResponseController
      * )
      */
 
-    public function getMediaData(Request $request, $media_id=null){
+    public function getMediaData(Request $request, $media_id){
 
         $bearerToken = $request->bearerToken();
 
@@ -369,21 +392,30 @@ class FfmpegController extends ResponseController
         //appel de la function qui verifie si un user à payé
         $response = static::postServer('/api/sever/user/bought', $bearerToken, $serverDatas );
 
-        if( $response->successful() ){
+        if( /*true */  $response->successful()){
 
              // verifie si le finaLink n'est pas null
         
         $media = Media::where('media_id',$media_id)->first();
 
-        if(is_null($media->finalMediaLink)){
+        if( $media->mediaIsOnCloud){
+            $path = Storage::path($media->mediaPath);
+            $name = File::basename($path);
 
-             $path = $media->mediaPath;
+            return redirect(
+                 URL::temporarySignedRoute(
+                    'playlist', now()->addSeconds(60), ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->mediaPath) ]
+                )
+            );
 
-            return $this->inline($path);
+           // return Redirect::route('playlist', ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->mediaPath) ]);
 
         }else{
             // appel de la function  de génération du m3u8
 
+            $path = $media->mediaPath;
+
+            return $this->inline($path);
         }
 
 
@@ -394,6 +426,65 @@ class FfmpegController extends ResponseController
         }
 
        
+
+    }
+
+    public function playlist(Request $request, $media_id, $playlist){
+
+       // echo $media_id;
+
+       if($request->hasValidSignature()){
+
+            if(isset($request->media_path)){
+
+                $path = dirname(decrypt($request->media_path));
+
+                $playlist = $path.'/'.$playlist;
+
+            }else{
+
+                $media = Media::find($media_id);
+
+                //$path = Storage::path($media->mediaPath);
+
+                $path = dirname($media->mediaPath);
+
+                $playlist = $path.'/'.$playlist;
+
+            } 
+
+            return FFMpeg::dynamicHLSPlaylist()
+            ->fromDisk('local')
+            ->open($playlist)
+            ->setKeyUrlResolver(function ($key) {
+            // echo $key;
+            return  URL::temporarySignedRoute(
+                'getKey', now()->addSeconds(2), ['key' => $key]
+            );
+                return route('getKey', ['key' => $key]);
+            })
+            ->setMediaUrlResolver(function ($mediaFilename) {
+                return $mediaFilename;
+            })
+            ->setPlaylistUrlResolver(function ($playlistFilename) use ($media_id, $playlist) {
+                //echo $playlistFilename;
+                return   URL::temporarySignedRoute(
+                    'playlist', now()->addSeconds(2), ['playlist' => $playlistFilename, 'media_id' => $media_id , 'media_path' => encrypt($playlist)]
+                );
+            //return route('playlist', ['playlist' => $playlistFilename, 'media_id' => $media_id , 'media_path' => encrypt($path)]);
+            }); 
+        }else{
+            return response('invalid url', Response::HTTP_NOT_FOUND);
+          }
+
+    }
+    public function getKey(Request $request, $key){
+
+      if($request->hasValidSignature()){
+           return Storage::disk('secret')->download($key) ;
+       }else{
+           return response('invalid url', Response::HTTP_NOT_FOUND);
+         }
 
     }
 
@@ -494,26 +585,5 @@ class FfmpegController extends ResponseController
 
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
-    }
+   
 }

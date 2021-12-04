@@ -19,13 +19,17 @@ class CreateMediasTable extends Migration
             $table->string('saison_id')->nullable();
 
             $table->string('bandePath')->nullable();
-            $table->string('finalBandeLink')->nullable();
 
             $table->string('mediaPath')->nullable();
-            $table->string('finalMediaLink')->nullable();
 
-            $table->string('coverLink')->nullable();
+           /* $table->string('coverLink')->nullable();
             $table->string('gifLink')->nullable();
+            */
+
+            //$table->boolean('isConverted')->nullable();
+
+            $table->boolean('bandeIsOnCloud')->default(0);
+            $table->boolean('mediaIsOnCloud')->default(0);
             
             $table->timestamps();
         });
