@@ -47,7 +47,7 @@ class ConverMediasJob implements ShouldQueue
 
           if($convert->convert($this->path /*'users/1/medias/video.mp4'*/, [], array_merge($this->media, ['isFilmBande' =>$this->isFilmBande]))){
 
-              echo "convertion Ok \n cloud link ok";
+              //echo "convertion Ok \n cloud link ok";
 
             }       
 
