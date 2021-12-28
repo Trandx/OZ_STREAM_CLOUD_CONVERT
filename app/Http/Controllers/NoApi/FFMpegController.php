@@ -46,8 +46,8 @@ class FFMpegController extends Controller
 
     private function initializeConfig(){
         $this->config = [
-            'ffmpeg.binaries'  => '/usr/bin/ffmpeg',
-            'ffprobe.binaries' => '/usr/bin/ffprobe',
+            'ffmpeg.binaries'  => exec('which ffmpeg'),//'/usr/bin/ffmpeg',
+            'ffprobe.binaries' => exec('which ffprobe'), //'/usr/bin/ffprobe',
             'timeout'          => 0,//3600*2,//3600*3, // The timeout for the underlying process
             'ffmpeg.threads'   => 5,   // The number of threads that FFmpeg should use
         ];

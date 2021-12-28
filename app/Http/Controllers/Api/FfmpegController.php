@@ -8,6 +8,7 @@ use App\Jobs\ConverMediasJob;
 use App\Models\Media;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redirect;
@@ -74,7 +75,7 @@ class FfmpegController extends ResponseController
         $datas = $request->only( 'media','media_id','saison_id', 'isFilmBande');
 
        $field = [
-            'media' => 'required|file|mimes:mp4,flv,3gp,mov,avi,webm,wmv|max:1024000' /*|mimes:mp4,mkv,ts|dimensions:width=500,height=500',*/,
+            'media' => 'required|file'/*|mimes:mp4,flv,3gp,mov,avi,webm,wmv|max:1024000' /*|mimes:mp4,mkv,ts|dimensions:width=500,height=500',*/,
         ];
 
         $validator = Validator::make($datas,$field);
@@ -113,9 +114,11 @@ class FfmpegController extends ResponseController
 
                         $column = 'mediaPath';
 
+                        $medias['mediaIsOnCloud'] = false;
+
                         $medias[$column] = $path; //env("PUBLIC_APP_URL")."/".$path;
 
-                        $link = 'api/getMediaData/'.$medias["media_id"];
+                        $link = 'api/getMediaData/'.$medias["media_id"]/*.'?access='.Crypt::encrypt($request->bearerToken()) */;
 
                         $serverDatas['link'] =  $link; // $medias[$column]
 
@@ -134,21 +137,24 @@ class FfmpegController extends ResponseController
                     //$expiredLink = $this->generateExpiredLink('getMediaData',now()->addHours(5), ['media_id' => $medias['media_id'], 'token' => $bearerToken]);
                     
                     
-                }else{
-                        ///il faut fourmir le lien final.
-                        $column = 'bandePath';
+                        }else{
+                                ///il faut fourmir le lien final.
 
-                        $medias[$column] = $path; //env("PUBLIC_APP_URL")."/".$path;
+                                $medias['bandeIsOnCloud'] = false;
 
-                        //penser à mettre à jour la durée de la vidéo
+                                $column = 'bandePath';
 
-                        $link = 'api/getMediaBandeData/'.$medias["media_id"];
+                                $medias[$column] = $path; //env("PUBLIC_APP_URL")."/".$path;
 
-                        $serverDatas['bandeLink'] =  $link; // $medias[$column]
+                                //penser à mettre à jour la durée de la vidéo
 
-                        $oldPath = $mediaInfo->bandePath??null;
+                                $link = 'api/getMediaBandeData/'.$medias["media_id"];
 
-                    }
+                                $serverDatas['bandeLink'] =  $link; // $medias[$column]
+
+                                $oldPath = $mediaInfo->bandePath??null;
+
+                            }
 
                     $response = static::postServer('/api/sever/add/media/link', $bearerToken, $serverDatas);
                    
@@ -172,6 +178,8 @@ class FfmpegController extends ResponseController
                     ];
 
                     $medias['saison_id'] = $datas['saison_id'];
+
+                    $medias['bandeIsOnCloud'] = false;
 
                     $column = 'bandePath';
 
@@ -203,9 +211,9 @@ class FfmpegController extends ResponseController
                    // $oldPath = storage_path($oldPath);
                     Storage::delete($oldPath);
 
-                }elseif(!is_null($oldPath) ){
+                }/*elseif(!is_null($oldPath) ){
                     return $this->errorResponse("error path", ['error' => 'invalid video path'], Response::HTTP_NOT_FOUND);
-                }
+                }*/
 
                
                
@@ -229,7 +237,7 @@ class FfmpegController extends ResponseController
 
                    /// lancer la job de covertion
 
-                   ConverMediasJob::dispatch(storage_path($path), ['id' => $mediaInfo->id], isset($datas['isFilmBande'])?$datas['isFilmBande']:null)/*->delay(now()->addSeconds(60))*/;
+                   ConverMediasJob::dispatch($path, ['id' => $mediaInfo->id], isset($datas['isFilmBande'])?$datas['isFilmBande']:null)->delay(now()->addSeconds(60));
 
                 return  $this->successResponse($data, ['success' => 'this user can read'], Response::HTTP_CREATED);
 
@@ -319,12 +327,14 @@ class FfmpegController extends ResponseController
 
         if( $media->bandeIsOnCloud){
 
-            $path = Storage::path($media->mediaPath);
-            $name = File::basename($path);
+           // $path = Storage::($media->mediaPath);
+           
+           $name = basename($media->bandePath);
+           //dd($name);
 
             return redirect(
                 URL::temporarySignedRoute(
-                   'playlist', now()->addHours(24), ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->mediaPath) ]
+                   'playlist', now()->addHours(24), ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->bandePath) ]
                 ));
 
             //return Redirect::route('playlist', ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->mediaPath) ]);
@@ -350,6 +360,7 @@ class FfmpegController extends ResponseController
      *      summary="Uget datas streams",
      *      description="return the content",
      * @OA\Parameter(name="media_id",description="id of media",in="path", @OA\Schema(type="string" )),
+     * @OA\Parameter(name="access",description="user token on base64",in="path", @OA\Schema(type="string" )),
      *     
      *      @OA\Response(
      *          response=20110,
@@ -372,7 +383,7 @@ class FfmpegController extends ResponseController
 
     public function getMediaData(Request $request, $media_id){
 
-        $bearerToken = $request->bearerToken();
+        $bearerToken = base64_decode($request->only('access')['access']??null); // Crypt::decrypt($request->only('access')['access'])??null; //$request->bearerToken();
 
         $media_id = $media_id??$request->media_id;
 
@@ -459,7 +470,7 @@ class FfmpegController extends ResponseController
             ->setKeyUrlResolver(function ($key) {
             // echo $key;
             return  URL::temporarySignedRoute(
-                'getKey', now()->addSeconds(2), ['key' => $key]
+                'getKey', now()->addHours(2), ['key' => $key]
             );
                 return route('getKey', ['key' => $key]);
             })
@@ -469,7 +480,7 @@ class FfmpegController extends ResponseController
             ->setPlaylistUrlResolver(function ($playlistFilename) use ($media_id, $playlist) {
                 //echo $playlistFilename;
                 return   URL::temporarySignedRoute(
-                    'playlist', now()->addSeconds(2), ['playlist' => $playlistFilename, 'media_id' => $media_id , 'media_path' => encrypt($playlist)]
+                    'playlist', now()->addHours(2), ['playlist' => $playlistFilename, 'media_id' => $media_id , 'media_path' => encrypt($playlist)]
                 );
             //return route('playlist', ['playlist' => $playlistFilename, 'media_id' => $media_id , 'media_path' => encrypt($path)]);
             }); 
@@ -520,9 +531,29 @@ class FfmpegController extends ResponseController
         
         $media = Media::where('saison_id',$saison_id)->first();
 
-        $path = $media->bandePath;
+        if( $media->bandeIsOnCloud){
 
-        return $this->inline($path);
+           // $path = Storage::($media->mediaPath);
+           
+           $name = basename($media->bandePath);
+           //dd($name);
+
+            return redirect(
+                URL::temporarySignedRoute(
+                   'playlist', now()->addHours(24), ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->bandePath) ]
+                ));
+
+            //return Redirect::route('playlist', ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->mediaPath) ]);
+             
+
+        }else{
+            // appel de la function  de génération du m3u8
+
+            $path = $media->bandePath;
+
+            return $this->inline($path);
+        }
+
 
     }
 

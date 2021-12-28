@@ -1,13 +1,13 @@
 ----VPS command ---------
 
- *** unzip *****
+ *** unzip ***
 
  unzip file.zip -d destination_folder
 
- **** unzip tar ****
+ *** unzip tar ***
  tar -xf folder.tar destination_folder
 
- **** unzip 7zip *****
+ *** unzip 7zip ***
     **This command installs 7z:
 
     sudo apt-get install p7zip-full
@@ -21,11 +21,29 @@
     7z x zipfile.zip
 
 
- **** permission *****
+ *** permission ***
  chmod -R 777 destination_folder
 
- *** copy with permission ****
+ *** copy with permission ***
  rsync -aux /home/my_home /media/backup/my_home
 
  *** delete file and folder ****
  rm -R ./*
+
+*** restriction file error ***
+
+   Warning: file_exists(): open_basedir restriction in effect. File()
+
+   resolved link: https://forum.aapanel.com/d/210-php
+
+*** problem for open_dir ***
+
+   on php module, delete all *** Disabled functions ***
+
+*** run queue premanently ***
+
+nohup php artisan queue:work --daemon > storage/logs/laravel.log &
+
+*** restore apt ***
+ls -l /etc/apt/sources.list.d/
+sudo rm /etc/apt/sources.list.d/rspamd.list

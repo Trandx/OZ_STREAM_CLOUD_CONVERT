@@ -24,9 +24,9 @@ class CustomCloudController implements CloudInterface
 
         $folderName = date('Y-m-d').'_'.time();
 
-         $result = (array)$op->CreateFolder($folderName);
+         $resp = (array)$op->CreateFolder($folderName);
 
-         if($result["success"]){
+         if($resp["success"]){
 
            // die ( var_dump($result) );
 
@@ -40,7 +40,7 @@ class CustomCloudController implements CloudInterface
 
                     $path = $dir.$fileName;
 
-                    $result = (array)$op->UploadFile($path,$result['datas']['FolderID']);
+                    $result = (array)$op->UploadFile($path,$resp['datas']['FolderID']);
 
                     if($result["success"]){
 

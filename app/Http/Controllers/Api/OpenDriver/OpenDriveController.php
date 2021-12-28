@@ -195,7 +195,7 @@ class OpenDriveController extends ResponseController
        
      $options = $this->option($options);
 
-       $retries = 1;
+       $retries = 5;
 
      // var_dump($options2);
 
@@ -211,6 +211,8 @@ class OpenDriveController extends ResponseController
                     $this->Login();
 
                     $options = $this->option($options);
+
+                    $result = $this->Process($method,$apipath, $options);
 
                 } else {
                     sleep(1);

@@ -47,12 +47,13 @@ class ValidMedia extends ResponseController
                         'Authorization' => 'Bearer '.$bearerToken,
                         'Accept' => 'application/json',
                     ])->post(env('OZ_STREAM_SERVER').'/api/server/is/media/diffuser', $params);
-            
-        if( $response->successful() ){
+       
+         if( $response->successful() ){
 
             // if(User::where('accessToken',$datas['accessToken'])->first()){
             //     return $next($request);
             // }
+          
             $id = $response->json()['data']['id'];
 
             $request->request->add(['id' => $id]);

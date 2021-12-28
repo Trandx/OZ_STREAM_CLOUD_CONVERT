@@ -28,12 +28,12 @@ class ConvertController extends ResponseController
               
             //$formats = null;
 
-        // $convert = $this->conv->hlsConvertion($path);
+            // $convert = $this->conv->hlsConvertion($path);
 
-        // $this->conv->hlsEncryptionAndConvertion($path,null,['240p']);
+            // $this->conv->hlsEncryptionAndConvertion($path,null,['240p']);
 
-            //$this->conv->extractingImage($path, 'cover.jpg');
-        // $this->conv->extractingAnimated_image($path, 'animated_image.gif');
+                //$this->conv->extractingImage($path, 'cover.jpg');
+            // $this->conv->extractingAnimated_image($path, 'animated_image.gif');
 
             $data = $this->analyse($path);
 
@@ -59,9 +59,7 @@ class ConvertController extends ResponseController
                 if ($data->r_y < 480 and $data->r_y >= 360) {
                 // plage de 360p
                     //$formatList = ['480p', '360p','240p', '144p'];
-                //$formatList = ['360p', '144p'];
-
-                $formatList = ['144p'];
+                $formatList = ['360p', '144p'];
                 }
 
                 if ($data->r_y < 360  and $data->r_y >= 240) {
