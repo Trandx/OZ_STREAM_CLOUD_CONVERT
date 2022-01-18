@@ -540,6 +540,11 @@ class FfmpegController extends ResponseController
         
         $media = Media::where('saison_id',$saison_id)->first();
 
+        if (!$media) {
+            return  $this->errorResponse('invalid media', null, Response::HTTP_NOT_FOUND);
+            
+        }
+
         if( $media->bandeIsOnCloud){
 
            // $path = Storage::($media->mediaPath);
