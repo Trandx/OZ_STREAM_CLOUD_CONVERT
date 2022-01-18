@@ -325,6 +325,11 @@ class FfmpegController extends ResponseController
 
         $media = Media::where('media_id',$media_id)->first();
 
+        if (!$media) {
+            return  $this->errorResponse('invalid media', null, Response::HTTP_NOT_FOUND);
+            
+        }
+
         if( $media->bandeIsOnCloud){
 
            // $path = Storage::($media->mediaPath);
@@ -408,26 +413,30 @@ class FfmpegController extends ResponseController
              // verifie si le finaLink n'est pas null
         
         $media = Media::where('media_id',$media_id)->first();
-
-        if( $media->mediaIsOnCloud){
-            $path = Storage::path($media->mediaPath);
-            $name = File::basename($path);
-
-            return redirect(
-                 URL::temporarySignedRoute(
-                    'playlist', now()->addSeconds(60), ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->mediaPath) ]
-                )
-            );
-
-           // return Redirect::route('playlist', ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->mediaPath) ]);
-
-        }else{
-            // appel de la function  de génération du m3u8
-
-            $path = $media->mediaPath;
-
-            return $this->inline($path);
+        
+        if (!$media) {
+            return  $this->errorResponse('invalid media', null, Response::HTTP_NOT_FOUND);
+            
         }
+            if( $media->mediaIsOnCloud){
+                $path = Storage::path($media->mediaPath);
+                $name = File::basename($path);
+
+                return redirect(
+                    URL::temporarySignedRoute(
+                        'playlist', now()->addSeconds(60), ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->mediaPath) ]
+                    )
+                );
+
+            // return Redirect::route('playlist', ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->mediaPath) ]);
+
+            }else{
+                // appel de la function  de génération du m3u8
+
+                $path = $media->mediaPath;
+
+                return $this->inline($path);
+            }
 
 
         }elseif( $response->failed() ){

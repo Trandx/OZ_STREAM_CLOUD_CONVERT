@@ -28,6 +28,10 @@ class CustomCloudController implements CloudInterface
 
          if($resp["success"]){
 
+            //TODO faire une enrégistrement des dossier dans la bd
+
+            ///
+
            // die ( var_dump($result) );
 
            foreach (File::allFiles($dir) as $file) {
