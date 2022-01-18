@@ -77,9 +77,9 @@ class ConvertController extends ResponseController
 
         }
 
-       //return $this->conv->hlsConvertion($path,$formatList, $option);
+       return $this->conv->hlsConvertion($path,$formatList, $option);
 
-       return $this->conv->hlsEncryptionAndConvertion($path,null,$formatList, $option);
+       //return $this->conv->hlsEncryptionAndConvertion($path,null,$formatList, $option);
        
     }
 
