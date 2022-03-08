@@ -3,22 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Api\OpenDriver\OpenDriveController;
-use App\Http\Controllers\Controller;
-use App\Jobs\UpdateLinkJob;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
-use Streaming\Clouds\CloudInterface;
 
-class CustomCloudController implements CloudInterface
+use App\Jobs\UpdateLinkJob;
+
+class CustomCloudController
 {
     
     /**
      * Upload a entire directory to a cloud
-     * @param  string $dir
+     * @param  array $files_path
      * @param  array $options
      */
-    public function uploadDirectory(string $dir, array $options): void
+    public function uploadDirectory(array $files_path, array $options): void
     {
         $op = new OpenDriveController();
 
@@ -34,32 +30,41 @@ class CustomCloudController implements CloudInterface
 
            // die ( var_dump($result) );
 
-           foreach (File::allFiles($dir) as $file) {
+           foreach ($files_path as $key => $file) {
 
-                if (pathinfo($file, PATHINFO_EXTENSION) === 'ts') {
+                $result = (array)$op->UploadFile($file["url"],$resp['datas']['FolderID']);
 
-                    $fileName = $file->getBasename(); 
+                if($result["success"]){
 
-                    $chunckFileName = explode('_', $fileName);
+                    unlink($file["url"]);
 
-                    $path = $dir.$fileName;
-
-                    $result = (array)$op->UploadFile($path,$resp['datas']['FolderID']);
-
-                    if($result["success"]){
-
-                        $m3u8File = $dir.$chunckFileName[0].'_'.$chunckFileName[1].'.m3u8';
-
-                        $content = file_get_contents($m3u8File);
-
-                        $content = str_replace( $fileName, $result['datas']['StreamingLink'], $content);
-                        
-                        file_put_contents($m3u8File, $content);
-
-                        unlink($path);
-                    }
-                    
+                    $files_path[$key]["url"] = $result['datas']['StreamingLink'];
                 }
+
+                // if (pathinfo($file, PATHINFO_EXTENSION) === 'ts') {
+
+                //     $fileName = $file->getBasename(); 
+
+                //     $chunckFileName = explode('_', $fileName);
+
+                //     $path = $dir.$fileName;
+
+                //     $result = (array)$op->UploadFile($path,$resp['datas']['FolderID']);
+
+                //     if($result["success"]){
+
+                //         $m3u8File = $dir.$chunckFileName[0].'_'.$chunckFileName[1].'.m3u8';
+
+                //         $content = file_get_contents($m3u8File);
+
+                //         $content = str_replace( $fileName, $result['datas']['StreamingLink'], $content);
+                        
+                //         file_put_contents($m3u8File, $content);
+
+                //         unlink($path);
+                //     }
+                    
+                // }
 
             }
             
@@ -98,26 +103,9 @@ class CustomCloudController implements CloudInterface
         
         }
 
-        // déplacer les m3u8
-            // File::files($dir)
-            //var_dump($options);
-
-            $folder = $options['finalFolder'];
-
-            foreach (File::files($dir) as  $file) {
-               
-                File::copy( $file->getRealPath(),$folder.'/'.$file->getBasename()) ;
-
-                if($file->getBasename() == $chunckFileName[0].'.m3u8'){
-                    $finalPath = $folder.'/'.$file->getBasename();
-                }
-                
-
-            }
-
             // appel d'une job pour la save
            // var_dump($options);
-           UpdateLinkJob::dispatch( $finalPath, $options);
+           UpdateLinkJob::dispatch( json_encode($files_path), $options);
 
     }
 

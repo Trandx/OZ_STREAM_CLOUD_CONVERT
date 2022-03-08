@@ -334,13 +334,16 @@ class FfmpegController extends ResponseController
 
            // $path = Storage::($media->mediaPath);
            
-           $name = basename($media->bandePath);
+           //$name = basename($media->bandePath);
            //dd($name);
 
-            return redirect(
-                URL::temporarySignedRoute(
-                   'playlist', now()->addHours(24), ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->bandePath) ]
-                ));
+           return response( json_decode($media->bandePath) , Response::HTTP_NOT_FOUND);
+
+
+            // return redirect(
+            //     URL::temporarySignedRoute(
+            //        'playlist', now()->addHours(24), ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->bandePath) ]
+            //     ));
 
             //return Redirect::route('playlist', ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->mediaPath) ]);
              
@@ -419,14 +422,16 @@ class FfmpegController extends ResponseController
             
         }
             if( $media->mediaIsOnCloud){
-                $path = Storage::path($media->mediaPath);
-                $name = File::basename($path);
+                //$path = Storage::path($media->mediaPath);
+                //$name = File::basename($path);
 
-                return redirect(
-                    URL::temporarySignedRoute(
-                        'playlist', now()->addSeconds(60), ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->mediaPath) ]
-                    )
-                );
+                return response( json_decode($media->bandePath) , Response::HTTP_NOT_FOUND);
+
+                // return redirect(
+                //     URL::temporarySignedRoute(
+                //         'playlist', now()->addSeconds(60), ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->mediaPath) ]
+                //     )
+                // );
 
             // return Redirect::route('playlist', ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->mediaPath) ]);
 
@@ -503,7 +508,7 @@ class FfmpegController extends ResponseController
       if($request->hasValidSignature()){
            return Storage::disk('secret')->download($key) ;
        }else{
-           return response('invalid url', Response::HTTP_NOT_FOUND);
+          return response('invalid url', Response::HTTP_NOT_FOUND); 
          }
 
     }
@@ -549,13 +554,15 @@ class FfmpegController extends ResponseController
 
            // $path = Storage::($media->mediaPath);
            
-           $name = basename($media->bandePath);
+          // $name = basename($media->bandePath);
            //dd($name);
 
-            return redirect(
-                URL::temporarySignedRoute(
-                   'playlist', now()->addHours(24), ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->bandePath) ]
-                ));
+            return response( json_decode($media->bandePath) , Response::HTTP_NOT_FOUND);
+
+            // return redirect(
+            //     URL::temporarySignedRoute(
+            //        'playlist', now()->addHours(24), ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->bandePath) ]
+            //     ));
 
             //return Redirect::route('playlist', ['playlist' => $name, 'media_id' => $media->id, 'media_path' => encrypt($media->mediaPath) ]);
              

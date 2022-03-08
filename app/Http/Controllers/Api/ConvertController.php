@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\NoApi\FFMpegController;
+use FFMpegController_convert_v2;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\File;
@@ -15,10 +16,24 @@ class ConvertController extends ResponseController
     private $conv;
 
     public function __construct(){
-        $this->conv = new FFMpegController;
+        $this->conv = new FFMpegController_convert_v2;
     }
 
-    public function convert($path = 'public/video.mp4', array $formatList = [], array $option = null){
+    public function convert($path = 'public/video.mp4', array $formatList = [], $options = null){
+
+        if(File::exists($path)){
+
+            $path = public_path($path);
+
+        }elseif(Storage::exists($path)){
+
+            $path = Storage::path($path);
+
+        }else{
+
+            return $this->errorResponse("error path", ['error' => 'invalid video path'], Response::HTTP_NOT_FOUND);
+
+        }
 
        // $path = storage_path('video.mp4');
 
@@ -77,7 +92,8 @@ class ConvertController extends ResponseController
 
         }
 
-       return $this->conv->hlsConvertion($path,$formatList, $option);
+        return $this->conv->convert($path, $formatList, $options);
+    //    return $this->conv->hlsConvertion($path,$formatList, $option);
 
        //return $this->conv->hlsEncryptionAndConvertion($path,null,$formatList, $option);
        
@@ -89,20 +105,6 @@ class ConvertController extends ResponseController
 
          //echo public_path($path);
         // $path = storage_path($path);
-
-            if(File::exists($path)){
-
-                $path = public_path($path);
-
-            }elseif(Storage::exists($path)){
-
-                $path = Storage::path($path);
-
-            }else{
-
-                return $this->errorResponse("error path", ['error' => 'invalid video path'], Response::HTTP_NOT_FOUND);
-
-            }
 
         return (object)$this->conv->analyseVideo($path);
 

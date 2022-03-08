@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use App\Models\Media;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -40,7 +39,7 @@ class UpdateLinkJob implements ShouldQueue
 
         $isFilmBande = $this->option['isFilmBande'];
 
-        $finalPath = 'users'.explode('users', $this->finalPath)[1];
+       //$finalPath = 'users'.explode('users', $this->finalPath)[1];
 
        // var_dump ($this->option['id']);
 
@@ -50,7 +49,7 @@ class UpdateLinkJob implements ShouldQueue
 
                 Storage::delete($media->mediaPath);
 
-                 $media->mediaPath = $finalPath;
+                 $media->mediaPath = $this->finalPath;
 
                 // $media->finalMediaLink = $finalPath;
 
@@ -60,7 +59,7 @@ class UpdateLinkJob implements ShouldQueue
 
                 Storage::delete( $media->bandePath);
 
-                 $media->bandePath = $finalPath;
+                 $media->bandePath = $this->finalPath;
 
                  //$media->finalBandeLink = $finalPath;
 
@@ -72,7 +71,7 @@ class UpdateLinkJob implements ShouldQueue
 
          if(!is_null($media->saison_id)){
 
-             $media->bandePath = $finalPath;
+             $media->bandePath = $this->finalPath;
 
              //$media->finalBandeLink = $finalPath;
 
