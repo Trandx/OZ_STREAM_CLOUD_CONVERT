@@ -237,7 +237,7 @@ class FfmpegController extends ResponseController
 
                    /// lancer la job de covertion
 
-                   ConverMediasJob::dispatch($path, ['id' => $mediaInfo->id], isset($datas['isFilmBande'])?$datas['isFilmBande']:null)->delay(now()->addSeconds(60));
+            ConverMediasJob::dispatch($path, ['id' => $mediaInfo->id], isset($datas['isFilmBande'])?$datas['isFilmBande']:null);//->delay(now()->addSeconds(60));
 
                 return  $this->successResponse($data, ['success' => 'this user can read'], Response::HTTP_CREATED);
 

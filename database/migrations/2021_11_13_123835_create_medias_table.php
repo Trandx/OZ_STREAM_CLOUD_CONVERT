@@ -18,9 +18,9 @@ class CreateMediasTable extends Migration
             $table->string('media_id')->nullable();
             $table->string('saison_id')->nullable();
 
-            $table->string('bandePath')->nullable();
+            $table->text('bandePath')->nullable();
 
-            $table->string('mediaPath')->nullable();
+            $table->text('mediaPath')->nullable();
 
            /* $table->string('coverLink')->nullable();
             $table->string('gifLink')->nullable();

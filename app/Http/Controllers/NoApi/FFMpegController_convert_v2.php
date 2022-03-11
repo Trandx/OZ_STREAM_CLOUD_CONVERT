@@ -1,10 +1,9 @@
 <?php
+namespace App\Http\Controllers\NoApi;
 
 use App\Http\Controllers\Api\CustomCloudController;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
+use getID3;
 
 class FFMpegController_convert_v2 extends Controller
 {
@@ -37,7 +36,6 @@ class FFMpegController_convert_v2 extends Controller
     public function __construct(){
 
         $this->defaultRepresentation();
-        $this->format();
 
     }
 
@@ -54,7 +52,7 @@ class FFMpegController_convert_v2 extends Controller
     
     private $comand = "ffmpeg -i ";
 
-    private $file_to_upload = null;
+    private $file_to_upload = [];
     private $formatList = [];
 
     public function save($output_file=null){
@@ -67,8 +65,8 @@ class FFMpegController_convert_v2 extends Controller
             $this->output_file = pathinfo($this->file_path);
         }
 
-        if(!is_dir($this->output_file['extension'])){
-             mkdir($this->output_file['extension']);
+        if(!is_dir($this->output_file['dirname'])){
+             mkdir($this->output_file['dirname']);
          }
 
         return $this->convertTo();
@@ -82,7 +80,7 @@ class FFMpegController_convert_v2 extends Controller
         return $this;
         
     }
-    public function format(array $formats =null){
+    public function format(array $formats = null){
         if($formats){
 
             foreach ($formats as $value) {
@@ -106,24 +104,32 @@ class FFMpegController_convert_v2 extends Controller
                     if($key != 0){
                         $this->comand .=" -acodec copy";
                     }else{
-                        $this->comand .="  -c:v libx264 ";
+                        $this->comand .="  -c:v libx264";
                     }
 
-                    $this->file_to_upload = [ "url" => $this->output_file['dirname']??''.$this->output_file['filename']
-                    .'_'.$value["representation"][1].$this->output_file['extension'],
+                    $dir = $this->output_file['dirname'].'/'??'';
+                    
+                    $url = $dir.$this->output_file['filename']
+                    .'_'.$value["representation"][1].'.'.$this->output_file['extension'];
+                     
+                    // file_exists($url)?unlink($url) :false; //delete file if existe
+                    
+                    $this->comand .= " -vf  scale=".$value['representation'][0].":".$value['representation'][1]." -b:v ".$value['bitrage'].'k '.$url.' -y';
+                    
+                    $this->file_to_upload[$key] = [ "url" => $url,
                     "resolution" => $value["representation"][1].'p',
                     ];
-                    
-                    $this->file_to_upload = $this->analyseVideo($this->file_to_upload["url"]);
             
                 }
-                    exec($this->comand);
+                
+                exec($this->comand);
+                
+                $this->analyseVideoToUpload();
+                    
                 return $this;
             }else{
                 return " representaion is required";
             }
-        
-
 
     }
 
@@ -133,7 +139,7 @@ class FFMpegController_convert_v2 extends Controller
 
     public function convert($path, array $formatList = null, $options){
 
-        return $this->open($path)->format($formatList)->save()->uploadToDriver($options);
+        return $this->open($path)->format($formatList)->save();//->uploadToDriver($options);
 
     }
 
@@ -148,6 +154,33 @@ class FFMpegController_convert_v2 extends Controller
 
     }
 
+    public function analyseVideoToUpload(){
+       
+        $getID3 = new getID3;
+        
+        //var_dump($this->file_to_upload);
+        
+            foreach ($this->file_to_upload as $key =>$value) {
+                
+                $this->dataAnalyseVideo = $getID3->analyze($value['url']);
+
+                if(isset($this->dataAnalyseVideo['playtime_string'])){
+                
+                $data['duration'] =  $this->dataAnalyseVideo['playtime_string'];
+        
+                }
+
+                $data['r_x'] =  $this->dataAnalyseVideo['video']['resolution_x'];
+                $data['r_y'] =  $this->dataAnalyseVideo['video']['resolution_y'];
+                $data['size'] =  $this->dataAnalyseVideo['filesize'];
+
+                $this->file_to_upload[$key]["details"] = $data;
+            }
+            
+            return $this;
+
+      
+    }
     public function analyseVideo($path){
 
         $getID3 = new getID3;

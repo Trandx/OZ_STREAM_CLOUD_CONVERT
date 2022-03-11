@@ -2,14 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Http\Controllers\NoApi\FFMpegController;
-use FFMpegController_convert_v2;
-use Illuminate\Http\Request;
+use App\Http\Controllers\NoApi\FFMpegController_convert_v2;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
-use ProtoneMedia\LaravelFFMpeg\Support\FFMpeg;
 
 class ConvertController extends ResponseController
 {
@@ -39,7 +35,7 @@ class ConvertController extends ResponseController
 
        //var_dump($option);
         
-        if (empty($formatList) ) {
+       if (empty($formatList) ) {
               
             //$formats = null;
 
@@ -52,47 +48,47 @@ class ConvertController extends ResponseController
 
             $data = $this->analyse($path);
 
-           if(!isset($data->r_y)){
-            return $this->errorResponse("error path", ['error' => 'invalid video path'], Response::HTTP_NOT_FOUND);
-           }
-                if ($data->r_y >= 720 ) {
-                    //plage du 720p
-                    //$formatList = ['720p','480p', '360p','240p', '144p'];
+            if(!isset($data->r_y)){
+                return $this->errorResponse("error path", ['error' => 'invalid video path'], Response::HTTP_NOT_FOUND);
+            }
+            if ($data->r_y >= 720 ) {
+                //plage du 720p
+                //$formatList = ['720p','480p', '360p','240p', '144p'];
 
-                    $formatList = ['720p', '360p', '144p'];
-                
-                }
+                $formatList = ['720p', '360p', '144p'];
+            
+            }
 
-                if ($data->r_y < 720 and $data->r_y >= 480) {
+            if ($data->r_y < 720 and $data->r_y >= 480) {
                 // plage du 480p
                 //$formatList = ['480p', '360p','240p', '144p'];
 
                 $formatList = ['360p', '144p'];
-                
-                }
+            
+            }
 
-                if ($data->r_y < 480 and $data->r_y >= 360) {
-                // plage de 360p
-                    //$formatList = ['480p', '360p','240p', '144p'];
-                $formatList = ['360p', '144p'];
-                }
+            if ($data->r_y < 480 and $data->r_y >= 360) {
+            // plage de 360p
+                //$formatList = ['480p', '360p','240p', '144p'];
+            $formatList = ['360p', '144p'];
+            }
 
-                if ($data->r_y < 360  and $data->r_y >= 240) {
-                    // plage 243p
-                    //$formatList = ['240p', '144p'];
-                    $formatList = [ '144p'];
-                
-                }
+            if ($data->r_y < 360  and $data->r_y >= 240) {
+                // plage 243p
+                //$formatList = ['240p', '144p'];
+                $formatList = [ '144p'];
+            
+            }
 
-                if ($data->r_y < 240) {
-                    //plage de 144p
-                    $formatList = [ '144p'];
-                
-                }
+            if ($data->r_y < 240) {
+                //plage de 144p
+                $formatList = [ '144p'];
+            
+            }
 
         }
 
-        return $this->conv->convert($path, $formatList, $options);
+    return $this->conv->convert($path, $formatList, $options);
     //    return $this->conv->hlsConvertion($path,$formatList, $option);
 
        //return $this->conv->hlsEncryptionAndConvertion($path,null,$formatList, $option);
