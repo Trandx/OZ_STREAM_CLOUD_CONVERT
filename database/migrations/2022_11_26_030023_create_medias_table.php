@@ -14,23 +14,15 @@ class CreateMediasTable extends Migration
     public function up()
     {
         Schema::create('medias', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
+            $table->json('details');
             $table->string('media_id')->nullable();
             $table->string('saison_id')->nullable();
-
-            $table->text('bandePath')->nullable();
-
-            $table->text('mediaPath')->nullable();
-
-           /* $table->string('coverLink')->nullable();
-            $table->string('gifLink')->nullable();
-            */
-
-            //$table->boolean('isConverted')->nullable();
-
-            $table->boolean('bandeIsOnCloud')->default(0);
-            $table->boolean('mediaIsOnCloud')->default(0);
-            
+            $table->boolean('is_film_bande')->default(false);
+            $table->string("current_path");
+            $table->json("converted_format")->nullable();
+            $table->boolean("is_online")->default(false);
+            $table->boolean("is_converted")->default(false);
             $table->timestamps();
         });
     }

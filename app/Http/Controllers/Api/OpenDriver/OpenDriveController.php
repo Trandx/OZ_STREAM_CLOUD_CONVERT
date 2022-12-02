@@ -180,10 +180,11 @@ class OpenDriveController extends ResponseController
                         
                     ];
                     break;
-
             default:
 
                 $this->options['session_id'] = $this->sessionid;
+
+                $this->options["folder_id"] = $this->OP_folder['id'];
 
                 return $this->options;
 
@@ -196,8 +197,6 @@ class OpenDriveController extends ResponseController
      $options = $this->option($options);
 
        $retries = 5;
-
-     // var_dump($options2);
 
         do
         {
@@ -243,7 +242,7 @@ class OpenDriveController extends ResponseController
         //$client = new Client();
         $client =  Http::withHeaders([
             'Accept' => 'application/json',
-        ])->asMultipart();
+        ])->withOptions(["verify"=>false])->asMultipart();
         //$request = new GuzzleResq($method, $url,$options);
 
         //die(var_dump($options));
@@ -338,7 +337,11 @@ class OpenDriveController extends ResponseController
                 'description' => $description,
         ];
 
-        return $this->RunAPI("POST", "folder.json", 'create_folder');
+        $result = $this->RunAPI("POST", "folder.json", 'create_folder');
+
+        $result["success"]??$this->OP_folder['id'] = $result['datas']['FolderID'];
+
+        return $result;
     }
 
     public function CopyFolder($srcid, $destid)
@@ -363,9 +366,9 @@ class OpenDriveController extends ResponseController
     {
         if ($this->sessionid === false)  return array("success" => false, "error" => self::OD_Translate("Not logged into OpenDrive."), "errorcode" => "no_login");
 
+        $this->OP_folder["id"] = (string)$srcid;
+
         $this->options = array(
-            "session_id" => $this->sessionid,
-            "folder_id" => (string)$srcid,
             "dst_folder_id" => (string)$destid,
             "move" => "true"
         );
@@ -377,9 +380,9 @@ class OpenDriveController extends ResponseController
     {
         if ($this->sessionid === false)  return array("success" => false, "error" => self::OD_Translate("Not logged into OpenDrive."), "errorcode" => "no_login");
 
+        $this->OP_folder["id"] = (string)$id;
+
         $this->options = array(
-            "session_id" => $this->sessionid,
-            "folder_id" => (string)$id,
             "folder_name" => (string)$newname
         );
 
@@ -390,24 +393,31 @@ class OpenDriveController extends ResponseController
     {
         if ($this->sessionid === false)  return array("success" => false, "error" => self::OD_Translate("Not logged into OpenDrive."), "errorcode" => "no_login");
 
-        $options = array(
-            "session_id" => $this->sessionid,
-            "folder_id" => (string)$id
-        );
+        $this->OP_folder["id"] = (string)$id;
 
-        return $this->RunAPI("POST", "folder/remove.json", $options);
+        // $this->options = array(
+        //     "folder_id" => (string)$id
+        // );
+
+        return $this->RunAPI("POST", "folder/remove.json", "");
     }
 
-    public function TrashFolder($id, $remove = false)
+    public function deleteFolder($id, $remove = false) // MOVE folder in the trash
     {
         if ($this->sessionid === false)  return array("success" => false, "error" => self::OD_Translate("Not logged into OpenDrive."), "errorcode" => "no_login");
 
-        $options = array(
-            "session_id" => $this->sessionid,
-            "folder_id" => (string)$id
-        );
+         $this->OP_folder["id"] = (string)$id;
+        // $this->options = array(
+        //     "session_id" => $this->sessionid,
+        //     "folder_id" => (string)$id
+        // );
 
-        $result = $this->RunAPI("POST", "folder/trash.json", $options);
+        $result = $this->RunAPI("POST", "folder/trash.json", "");
+
+        var_dump($result);
+
+        // var_dump($options);
+
         if (!$result["success"])  return $result;
 
         if ($remove)  $result = $this->RemoveTrashedFolder($id);
@@ -427,7 +437,16 @@ class OpenDriveController extends ResponseController
         return $this->RunAPI("POST", "folder/restore.json", $options);
     }
 
-    public function  UploadFile($path/*Request $request*/, $folderid = "NzBfMTE5NjQ5NF9BR2MxdQ" )
+    public function emptyTrash() // empty the trash
+    {
+
+        if ($this->sessionid === false)  return array("success" => false, "error" => self::OD_Translate("Not logged into OpenDrive."), "errorcode" => "no_login");
+
+        return $this->RunAPI("DELETE", "folder/trash.json/".$this->sessionid, "");
+    }
+
+
+    public function  UploadFile($path/*Request $request*/, $folderid = null )
     {
 
         //if ($this->sessionid === false)  return array("success" => false, "error" => self::OD_Translate("Not logged into OpenDrive."), "errorcode" => "no_login");
@@ -454,7 +473,7 @@ class OpenDriveController extends ResponseController
         $this->OP_file_to_upload["type"] = File::mimeType($path);
 
 
-        $this->OP_folder['id'] = $folderid;
+        $folderid??$this->OP_folder['id'] = $folderid;
 
         /*if (is_resource($dataorfp))
         {

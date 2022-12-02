@@ -5,12 +5,10 @@ namespace App\Http\Middleware;
 
 use App\Http\Controllers\Api\Auth\SessionTrait;
 use App\Http\Controllers\Api\ResponseController;
-use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Validator;
 
 class ValidAccount extends ResponseController
 {

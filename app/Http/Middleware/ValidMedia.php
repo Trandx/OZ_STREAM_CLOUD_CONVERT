@@ -18,17 +18,18 @@ class ValidMedia extends ResponseController
      * @param  \Closure  $next
      * @return mixed
      */
+    
     public function handle(Request $request, Closure $next)
     {
     
         $bearerToken = $request->bearerToken();
 
-        $datas = $request->only('media_id', 'saison_id', 'isFilmBande');
+        $datas = $request->only('media_id', 'saison_id', 'is_film_bande');
 
         $field = [
             'media_id' => 'required_without:saison_id',
             'saison_id' => 'required_without:media_id',
-            'isFilmBande' => 'required_without:saison_id|boolean',
+            'is_film_bande' => 'required_without:saison_id|boolean',
         ];
 
         $validator = Validator::make($datas,$field);
@@ -46,7 +47,7 @@ class ValidMedia extends ResponseController
         $response = Http::withHeaders([
                         'Authorization' => 'Bearer '.$bearerToken,
                         'Accept' => 'application/json',
-                    ])->post(env('OZ_STREAM_SERVER').'/api/server/is/media/diffuser', $params);
+                    ])->withOptions(["verify"=>false])->post(env('OZ_STREAM_SERVER').'/api/server/is/media/diffuser', $params);
        
          if( $response->successful() ){
 

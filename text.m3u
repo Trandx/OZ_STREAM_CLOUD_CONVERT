@@ -1,0 +1,29 @@
+#EXT-X-VERSION:3
+
+#EXTM3U
+
+#EXT-X-TARGETDURATION:10
+
+#EXT-X-MEDIA-SEQUENCE:1
+
+ 
+
+# Old-style integer duration; avoid for newer clients.
+
+#EXTINF:10,
+
+http://127.0.0.1:8000/api/getMediaBandeData/43114545-cc62-4e6c-96b9-564f73e4e8db
+
+ 
+
+# New-style floating-point duration; use for modern clients.
+
+#EXTINF:10.0,
+
+http://127.0.0.1:8000/api/getMediaBandeData/43114545-cc62-4e6c-96b9-564f73e4e8db
+
+#EXTINF:9.5,
+
+http://127.0.0.1:8000/api/getMediaBandeData/43114545-cc62-4e6c-96b9-564f73e4e8db
+
+#EXT-X-ENDLIST

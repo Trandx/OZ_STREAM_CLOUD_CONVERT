@@ -22,13 +22,13 @@ class CustomCloudController
 
          $resp = (array)$op->CreateFolder($folderName);
 
-         if($resp["success"]){
+        if($resp["success"]){
 
             //TODO faire une enrégistrement des dossier dans la bd
 
             ///
 
-           // die ( var_dump($result) );
+            var_dump($files_path) ;
 
            foreach ($files_path as $key => $file) {
 

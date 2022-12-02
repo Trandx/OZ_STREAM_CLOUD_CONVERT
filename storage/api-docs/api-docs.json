@@ -115,6 +115,14 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "name": "access",
+                        "in": "path",
+                        "description": "user token on base64",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
@@ -133,7 +141,7 @@
                 }
             }
         },
-        "/api/getSaisonBandeData/{media_id}": {
+        "/api/getSaisonBandeData/{saison_id}": {
             "post": {
                 "tags": [
                     "media streamming"
@@ -143,9 +151,9 @@
                 "operationId": "streamming",
                 "parameters": [
                     {
-                        "name": "media_id",
+                        "name": "saison_id",
                         "in": "path",
-                        "description": "id of media",
+                        "description": "id of saison",
                         "schema": {
                             "type": "string"
                         }

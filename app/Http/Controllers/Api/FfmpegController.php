@@ -96,6 +96,8 @@ class FfmpegController extends ResponseController
 
              $path = "users/".$path;
 
+            
+
               // contacter le server distant
 
                 if (isset($datas['media_id'])) {
@@ -122,8 +124,9 @@ class FfmpegController extends ResponseController
 
                         $serverDatas['link'] =  $link; // $medias[$column]
 
+                        $_path = storage_path("app/$path");
                         /// info sur la video
-                        $mediaData =  (new ConvertController())->analyse($path);
+                        $mediaData =  (new ConvertController())->analyse($_path);
 
                         if (isset($mediaData->duration)) {
                            
@@ -156,12 +159,14 @@ class FfmpegController extends ResponseController
 
                             }
 
-                    $response = static::postServer('/api/sever/add/media/link', $bearerToken, $serverDatas);
+                    
+
+                    $response = static::postServer('/api/server/add/media/link', $bearerToken, $serverDatas);
                    
                   /*  $response = Http::withHeaders([
                         'Authorization' => 'Bearer '.$bearerToken,
                         'Accept' => 'application/json',
-                    ])->post(env('OZ_STREAM_SERVER').'/api/sever/add/media/link', $serverDatas);
+                    ])->post(env('OZ_STREAM_SERVER').'/api/server/add/media/link', $serverDatas);
                     */
 
                 }
@@ -185,12 +190,12 @@ class FfmpegController extends ResponseController
 
                     $medias[$column] = $path; //env("PUBLIC_APP_URL")."/".$path;
 
-                    $response = static::postServer('/api/sever/add/media/link', $bearerToken, $serverDatas);
+                    $response = static::postServer('/api/server/add/media/link', $bearerToken, $serverDatas);
 
                    /* $response = Http::withHeaders([
                         'Authorization' => 'Bearer '.$bearerToken,
                         'Accept' => 'application/json',
-                    ])->post(env('OZ_STREAM_SERVER').'/api/sever/add/media/link',  $serverDatas );*/
+                    ])->post(env('OZ_STREAM_SERVER').'/api/server/add/media/link',  $serverDatas );*/
                     $mediaInfo = Media::where('saison_id', $datas['saison_id'])->first();
 
                     $oldPath = $mediaInfo->bandePath??null;
@@ -360,7 +365,7 @@ class FfmpegController extends ResponseController
 
     }
 
-          /**
+    /**
      * @OA\Post(
      *      path="/api/getMediaData/{media_id}",
      *      operationId="streamming",
@@ -409,7 +414,7 @@ class FfmpegController extends ResponseController
         */
 
         //appel de la function qui verifie si un user à payé
-        $response = static::postServer('/api/sever/user/bought', $bearerToken, $serverDatas );
+        $response = static::postServer('/api/server/user/bought', $bearerToken, $serverDatas );
 
         if( /*true */  $response->successful()){
 

@@ -17,7 +17,7 @@ trait ServerTrait
         $response = Http::withHeaders([
             'Authorization' => 'Bearer '.$bearerToken,
             'Accept' => 'application/json',
-        ])->post($url, $serverDatas);
+        ])->withOptions(["verify"=>false])->post($url, $serverDatas);
 
         return $response;
     }

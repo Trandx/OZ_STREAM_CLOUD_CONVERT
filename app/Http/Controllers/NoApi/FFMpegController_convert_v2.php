@@ -52,18 +52,20 @@ class FFMpegController_convert_v2 extends Controller
     
     private $comand = "ffmpeg -i ";
 
-    private $file_to_upload = [];
+    private $output_files = [];
     private $formatList = [];
 
     public function save($output_file=null){
 
-        if($output_file){
-            $this->output_file = pathinfo($output_file);
-            // create directory //
+        // if($output_file){
+        //     $this->output_file = pathinfo($output_file??$this->file_path);
+        //     // create directory //
                 
-        }else{
-            $this->output_file = pathinfo($this->file_path);
-        }
+        // }else{
+        //     $this->output_file = pathinfo($this->file_path);
+        // }
+
+        $this->output_file = pathinfo($output_file??$this->file_path);
 
         if(!is_dir($this->output_file['dirname'])){
              mkdir($this->output_file['dirname']);
@@ -116,8 +118,9 @@ class FFMpegController_convert_v2 extends Controller
                     
                     $this->comand .= " -vf  scale=".$value['representation'][0].":".$value['representation'][1]." -b:v ".$value['bitrage'].'k '.$url.' -y';
                     
-                    $this->file_to_upload[$key] = [ "url" => $url,
-                    "resolution" => $value["representation"][1].'p',
+                    $this->output_files[$key] = [ 
+                        "current_path" => $url,
+                        "resolution" => $value["representation"][1].'p',
                     ];
             
                 }
@@ -126,7 +129,7 @@ class FFMpegController_convert_v2 extends Controller
                 
                 $this->analyseVideoToUpload();
                     
-                return $this;
+                return $this->output_files;
             }else{
                 return " representaion is required";
             }
@@ -137,16 +140,16 @@ class FFMpegController_convert_v2 extends Controller
 
     }
 
-    public function convert($path, array $formatList = null, $options){
+    public function convert($path, array $formatList = null){
 
-        return $this->open($path)->format($formatList)->save();//->uploadToDriver($options);
+        return $this->open($path)->format($formatList);//->uploadToDriver($options);
 
     }
 
     public function uploadToDriver($options){
         $custom = new CustomCloudController();
 
-        $custom->uploadDirectory($this->file_to_upload, $options);
+        $custom->uploadDirectory($this->output_files, $options);
             //
                 // les procédures de l'upload
             //
@@ -158,11 +161,11 @@ class FFMpegController_convert_v2 extends Controller
        
         $getID3 = new getID3;
         
-        //var_dump($this->file_to_upload);
+        //var_dump($this->output_files);
         
-            foreach ($this->file_to_upload as $key =>$value) {
+            foreach ($this->output_files as $key =>$value) {
                 
-                $this->dataAnalyseVideo = $getID3->analyze($value['url']);
+                $this->dataAnalyseVideo = $getID3->analyze($value['current_path']);
 
                 if(isset($this->dataAnalyseVideo['playtime_string'])){
                 
@@ -174,7 +177,7 @@ class FFMpegController_convert_v2 extends Controller
                 $data['r_y'] =  $this->dataAnalyseVideo['video']['resolution_y'];
                 $data['size'] =  $this->dataAnalyseVideo['filesize'];
 
-                $this->file_to_upload[$key]["details"] = $data;
+                $this->output_files[$key]["details"] = $data;
             }
             
             return $this;
@@ -191,7 +194,8 @@ class FFMpegController_convert_v2 extends Controller
         $data['duration'] =  $this->dataAnalyseVideo['playtime_string'];
 
         }
-
+        //var_dump($this->dataAnalyseVideo);
+        
         $data['r_x'] =  $this->dataAnalyseVideo['video']['resolution_x'];
         $data['r_y'] =  $this->dataAnalyseVideo['video']['resolution_y'];
         $data['size'] =  $this->dataAnalyseVideo['filesize'];

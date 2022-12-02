@@ -2,10 +2,6 @@
 
 namespace App\Http\Controllers\Api\Auth;
 
-use App\Http\Controllers\Api\ResponseController as resp;
-use App\Models\TokenDiffuserSpace;
-use Illuminate\Http\Response;
-use Illuminate\Http\Request as req;
 trait SessionTrait{
 
 

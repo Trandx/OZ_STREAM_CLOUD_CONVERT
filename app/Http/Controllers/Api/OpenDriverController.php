@@ -78,15 +78,7 @@ class OpenDriverController extends OpenDriveController
         return $this->GetFolderList($data['folder_id']);
     }
 
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request, $id)
-    {
-        
-    }
+   
 
     /**
      * Store a newly created resource in storage.
